@@ -9,6 +9,7 @@ CREATE TABLE games (
 
 CREATE TABLE players (
     player_id INTEGER PRIMARY KEY,
+    password_hash VARCHAR(100),
     player_name VARCHAR(20)
 );
 
