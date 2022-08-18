@@ -9,15 +9,14 @@ from flask_cors import cross_origin, CORS
 
 app = Flask(__name__)
 cors = CORS(app)
-
+MAX_INT = (2**63)-1
 
 def generate_unique_field(table_name, field_name):
-    NUM_AVAILABLE_IDS = 1000000
     potential_id = -1
     with sqlite3.connect("database.db") as connection:
         while potential_id < 0 or len(connection.execute("SELECT * FROM "+table_name+" WHERE "+field_name+"='"
                                                          + str(potential_id) + "';").fetchall()) > 0:
-            potential_id = random.randint(0, NUM_AVAILABLE_IDS)
+            potential_id = random.randint(0, MAX_INT)
     return potential_id
 
 def create_record(table_name,field_name, field_value):
@@ -29,11 +28,16 @@ def create_record(table_name,field_name, field_value):
 
 def authenticate_user(game_id,name, password):
     password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
-    command = f'SELECT DISTINCT players.player_id FROM games_and_players, players WHERE game_id="{game_id}" AND players.player_name="{name}" AND players.password_hash="{password_hash}";'
+    command = f'SELECT DISTINCT players.player_id ' \
+              f'FROM games_and_players ' \
+              f'INNER JOIN players ' \
+              f'ON players.player_id=games_and_players.player_id ' \
+              f'WHERE game_id="{game_id}" ' \
+              f'AND players.player_name="{name}" ' \
+              f'AND players.password_hash="{password_hash}";'
     with sqlite3.connect("database.db") as connection:
         all_results = connection.execute(command).fetchall()
-        print(all_results)
-        return len(connection.execute(command).fetchall()) == 1
+        return len(connection.execute(command).fetchall()) > 0
 
 @app.route('/players/<game_id>', methods=["POST"])
 @cross_origin()
@@ -42,13 +46,14 @@ def get_all_players(game_id):
     name=json_data["name"]
     password=json_data["password"]
     if not authenticate_user(game_id, name, password):
-        return "Name and/or password incorrect"
-    command = f"SELECT DISTINCT players.player_name " \
-              f"FROM players,games_and_players " \
+        return "Name and/or password incorrect", 401
+    command = f"SELECT players.player_name " \
+              f"FROM players " \
+              f"INNER JOIN games_and_players " \
+              f"ON players.player_id=games_and_players.player_id " \
               f'WHERE game_id={game_id};'
     with sqlite3.connect("database.db") as connection:
         allNames = connection.execute(command).fetchall()
-        print(allNames)
         return {"names": [allNames[i][0] for i in range(0, len(allNames))]}, 200
 
 @app.route('/register/<game_id>', methods=["POST"])
@@ -101,7 +106,7 @@ def create_session():
 @app.route('/game/<game_id>/draw_date')
 @cross_origin()
 def get_draw_date(game_id):
-    command = f"SELECT draw_date FROM games WHERE game_id={game_id}"
+    command = f'SELECT draw_date FROM games WHERE game_id="{game_id}"'
     with sqlite3.connect("database.db") as connection:
         return connection.execute(command).fetchall()[0][0]
 
