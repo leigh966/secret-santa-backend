@@ -1,4 +1,5 @@
 # Going for a lightweight (no user data saved) approach instead
+import datetime
 import sqlite3
 
 import flask
@@ -6,6 +7,7 @@ from flask import Flask
 import random
 import hashlib
 from flask_cors import cross_origin, CORS
+import time
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -24,6 +26,7 @@ def create_record(table_name,field_name, field_value):
     print(command)
     with sqlite3.connect("database.db") as connection:
         connection.execute(command)
+        connection.commit()
 
 
 def authenticate_user(game_id,name, password):
@@ -38,6 +41,115 @@ def authenticate_user(game_id,name, password):
     with sqlite3.connect("database.db") as connection:
         all_results = connection.execute(command).fetchall()
         return len(connection.execute(command).fetchall()) > 0
+
+
+# DEBUG - ensure to remove in production
+@app.route('/start/<game_id>', methods=["POST"])
+@cross_origin()
+def start_game(game_id):
+    LONG_AGO = "01-01-1980 00:00:00"
+    command = "UPDATE games " \
+              f'SET draw_date = "{LONG_AGO}" ' \
+              f'WHERE game_id = "{game_id}";'
+    print(command)
+
+    with sqlite3.connect("database.db") as connection:
+        connection.execute(command)
+        connection.commit()
+        return "", 201
+
+def should_game_start(game_id):
+    command = 'SELECT * ' \
+              'FROM games ' \
+              f'WHERE game_id = {game_id} ' \
+              f'AND draw_date > datetime("now");'
+    with sqlite3.connect("database.db") as connection:
+        passed_game = connection.execute(command).fetchall()
+        if len(passed_game) == 0:
+            return True
+    return False
+
+
+def get_picked_name(game_id, name):
+    command = 'SELECT picked_name ' \
+              'FROM players ' \
+              'INNER JOIN games_and_players ' \
+              'ON players.player_id=games_and_players.player_id ' \
+              f'WHERE player_name="{name}" ' \
+              f'AND game_id={game_id};'
+    print(command)
+    with sqlite3.connect("database.db") as connection:
+        picked_names=connection.execute(command).fetchall()
+        return picked_names[0][0]
+
+def set_picked_name(game_id, name, picked_name):
+    command = 'UPDATE players ' \
+              f"SET picked_name = '{picked_name}' " \
+              f'WHERE player_id ' \
+              f'IN  (SELECT player_id FROM games_and_players WHERE game_id={game_id}) ' \
+              f'AND player_name = "{name}";'
+    print(command)
+    with sqlite3.connect("database.db") as connection:
+        connection.execute(command)
+        connection.commit()
+
+def mark_drawn(game_id):
+    with sqlite3.connect("database.db") as connection:
+        connection.execute(f"UPDATE games SET drawn = TRUE WHERE game_id={game_id};")
+
+def randomise_order(arr):
+    output=[]
+    while len(arr) > 0:
+        index = random.randrange(0,len(arr))
+        elem = arr.pop(index)
+        output.append(elem)
+    return output
+
+def draw(game_id):
+    command = 'SELECT player_name ' \
+              'FROM players ' \
+              'INNER JOIN games_and_players ' \
+              'ON players.player_id=games_and_players.player_id ' \
+              f'WHERE game_id={game_id};'
+    names = ()
+    print(command)
+    with sqlite3.connect("database.db") as connection:
+        names=randomise_order(connection.execute(command).fetchall())
+        print("names: ", names)
+    for index in range(0, len(names)):
+        set_picked_name(game_id, names[index][0], names[(index+1)%len(names)][0])
+
+def is_drawn(game_id):
+    command = 'SELECT drawn ' \
+              'FROM games ' \
+              f'WHERE game_id={game_id}'
+    with sqlite3.connect("database.db") as connection:
+        if connection.execute(command).fetchall()[0][0] == 1:
+            return True
+        return False
+
+@app.route('/picked/<game_id>', methods=["POST"])
+@cross_origin()
+def get_name(game_id):
+    json_data = flask.request.json
+    name=json_data["name"]
+    password=json_data["password"]
+    if not authenticate_user(game_id, name, password):
+        return "Name and/or password incorrect", 401
+    if not should_game_start(game_id):
+        return "Not ready to draw", 401
+    picked_name = get_picked_name(game_id,name)
+    status = 200
+    if picked_name == None:
+        if is_drawn(game_id):
+            return "A name should have been drawn but hasn't. Sorry, we don't know what went wrong", 500
+        draw(game_id)
+        picked_name = get_picked_name(game_id, name)
+        status = 201
+    print(picked_name)
+    return picked_name, status
+
+
 
 @app.route('/players/<game_id>', methods=["POST"])
 @cross_origin()
@@ -62,6 +174,7 @@ def register_player(game_id):
     if not game_exists(game_id):
         return f"No game with id {game_id}", 404
     json_data = flask.request.json
+    print(json_data)
     name=json_data["name"]
     if name == "":
         return "No name given", 400
@@ -83,7 +196,9 @@ def game_exists(game_id):
 
 def player_exists(name, game_id):
     command = f"SELECT DISTINCT *" \
-              f"FROM players,games_and_players " \
+              f"FROM players " \
+              f"INNER JOIN games_and_players " \
+              f"ON players.player_id=games_and_players.player_id " \
               f'WHERE game_id={game_id} AND player_name="{name}";'
     with sqlite3.connect("database.db") as connection:
         return len(connection.execute(command).fetchall())>0
