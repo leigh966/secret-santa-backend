@@ -4,13 +4,15 @@ DROP TABLE IF EXISTS games_and_players;
 
 CREATE TABLE games (
     game_id INTEGER PRIMARY KEY,
-    draw_date DATE
+    draw_date DATE,
+    drawn INTEGER DEFAULT FALSE
 );
 
 CREATE TABLE players (
     player_id INTEGER PRIMARY KEY,
-    password_hash VARCHAR(100),
-    player_name VARCHAR(20)
+    password_hash VARCHAR(100) NOT NULL,
+    player_name VARCHAR(20) NOT NULL,
+    picked_name VARCHAR(20) DEFAULT NULL
 );
 
 CREATE TABLE games_and_players (
