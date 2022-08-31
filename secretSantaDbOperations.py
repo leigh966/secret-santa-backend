@@ -8,6 +8,7 @@ def draw(game_id):
     names = randomise_order(names)
     for index in range(0, len(names)):
         set_picked_name(game_id, names[index][0], names[(index+1)%len(names)][0])
+    mark_drawn(game_id)
 
 def is_drawn(game_id):
     drawn = select("drawn", "games", f"game_id={game_id}")[0][0]
