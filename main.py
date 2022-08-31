@@ -18,16 +18,10 @@ cors = CORS(app)
 
 def authenticate_user(game_id,name, password):
     password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
-    command = f'SELECT DISTINCT players.player_id ' \
-              f'FROM games_and_players ' \
-              f'INNER JOIN players ' \
-              f'ON players.player_id=games_and_players.player_id ' \
-              f'WHERE game_id="{game_id}" ' \
-              f'AND players.player_name="{name}" ' \
-              f'AND players.password_hash="{password_hash}";'
-    with sqlite3.connect("database.db") as connection:
-        all_results = connection.execute(command).fetchall()
-        return len(connection.execute(command).fetchall()) > 0
+    join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
+    and_expr = get_and_expression(f'game_id="{game_id}"', f'players.player_name="{name}"', f'players.password_hash="{password_hash}"')
+    matching_players = select("DISTINCT players.player_id", join_expr, and_expr)
+    return len(matching_players) > 0
 
 
 # DEBUG - ensure to remove in production

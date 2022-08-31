@@ -24,3 +24,11 @@ def select(SELECT, FROM, WHERE):
 
 def get_inner_join_expression(table1, table2, on):
     return f"{table1} INNER JOIN {table2} ON {on}"
+
+def get_and_expression(*statements):
+    output = ""
+    for index in range(0, len(statements)):
+        if index > 0:
+            output += " AND "
+        output += statements[index]
+    return output
