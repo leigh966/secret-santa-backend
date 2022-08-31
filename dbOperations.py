@@ -17,3 +17,7 @@ def generate_unique_field(table_name, field_name):
                                                          + str(potential_id) + "';").fetchall()) > 0:
             potential_id = random.randint(0, MAX_INT)
     return potential_id
+
+def select(SELECT, FROM, WHERE):
+    with sqlite3.connect("database.db") as connection:
+        return connection.execute(f'SELECT {SELECT} FROM {FROM} WHERE {WHERE};').fetchall()

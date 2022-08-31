@@ -46,14 +46,9 @@ def start_game(game_id):
         return "", 201
 
 def should_game_start(game_id):
-    command = 'SELECT * ' \
-              'FROM games ' \
-              f'WHERE game_id = {game_id} ' \
-              f'AND draw_date > datetime("now");'
-    with sqlite3.connect("database.db") as connection:
-        passed_game = connection.execute(command).fetchall()
-        if len(passed_game) == 0:
-            return True
+    passed_game = select("*", "games", f'game_id={game_id} AND draw_date > datetime("now")')
+    if len(passed_game) == 0:
+        return True
     return False
 
 
@@ -107,13 +102,8 @@ def draw(game_id):
         set_picked_name(game_id, names[index][0], names[(index+1)%len(names)][0])
 
 def is_drawn(game_id):
-    command = 'SELECT drawn ' \
-              'FROM games ' \
-              f'WHERE game_id={game_id}'
-    with sqlite3.connect("database.db") as connection:
-        if connection.execute(command).fetchall()[0][0] == 1:
-            return True
-        return False
+    drawn = select("drawn", "games", f"game_id={game_id}")[0][0]
+    return drawn == 1
 
 @app.route('/picked/<game_id>', methods=["POST"])
 @cross_origin()
@@ -161,25 +151,21 @@ def register_player(game_id):
     if not game_exists(game_id):
         return f"No game with id {game_id}", 404
     json_data = flask.request.json
-    print(json_data)
     name=json_data["name"]
     if name == "":
         return "No name given", 400
-    print(name)
     if player_exists(name, game_id):
         return "That username is already taken!", 409
     password=json_data["password"]
     if password == "":
         return "No password given", 400
-    print(password)
     password_hash = hashlib.sha256(password.encode('utf-8'))
     return create_player(name, password_hash.hexdigest(), game_id)
 
 
 def game_exists(game_id):
-    command = f"SELECT game_id FROM games WHERE game_id={game_id}"
-    with sqlite3.connect("database.db") as connection:
-        return len(connection.execute(command).fetchall())>0
+    games_with_id = select("game_id", "games", f"game_id={game_id}")
+    return len(games_with_id) > 0
 
 def player_exists(name, game_id):
     command = f"SELECT DISTINCT *" \
@@ -208,9 +194,7 @@ def create_session():
 @app.route('/game/<game_id>/draw_date')
 @cross_origin()
 def get_draw_date(game_id):
-    command = f'SELECT draw_date FROM games WHERE game_id="{game_id}"'
-    with sqlite3.connect("database.db") as connection:
-        return connection.execute(command).fetchall()[0][0]
+    return select("draw_date", "games", f"game_id={game_id}")[0][0]
 
 
 @app.route('/session/<session_id>-<user_id>')
