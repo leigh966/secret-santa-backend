@@ -93,23 +93,6 @@ def get_draw_date(game_id):
     return select("draw_date", "games", f"game_id={game_id}")[0][0]
 
 
-@app.route('/session/<session_id>-<user_id>')
-@cross_origin()
-def session(session_id, user_id):
-    with sqlite3.connect("database.db") as connection:
-        names_results = connection.execute("SELECT name FROM games WHERE game_id='"+str(session_id)+"';").fetchall()
-        names = []
-        for names_result in names_results:
-            names.append(names_result[0])
-        if len(names) > 0:
-            return '{"names": '+str(names)+"}", 200
-        else:
-            return "No Game Found", 400
-
-
-
-
-
 import init_db
 
 app.run(port=8000)
