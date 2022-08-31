@@ -53,16 +53,8 @@ def should_game_start(game_id):
 
 
 def get_picked_name(game_id, name):
-    command = 'SELECT picked_name ' \
-              'FROM players ' \
-              'INNER JOIN games_and_players ' \
-              'ON players.player_id=games_and_players.player_id ' \
-              f'WHERE player_name="{name}" ' \
-              f'AND game_id={game_id};'
-    print(command)
-    with sqlite3.connect("database.db") as connection:
-        picked_names=connection.execute(command).fetchall()
-        return picked_names[0][0]
+    join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
+    return select("picked_name", join_expr, f' player_name="{name}" AND game_id={game_id}')[0][0]
 
 def set_picked_name(game_id, name, picked_name):
     command = 'UPDATE players ' \
@@ -156,13 +148,9 @@ def game_exists(game_id):
     return len(games_with_id) > 0
 
 def player_exists(name, game_id):
-    command = f"SELECT DISTINCT *" \
-              f"FROM players " \
-              f"INNER JOIN games_and_players " \
-              f"ON players.player_id=games_and_players.player_id " \
-              f'WHERE game_id={game_id} AND player_name="{name}";'
-    with sqlite3.connect("database.db") as connection:
-        return len(connection.execute(command).fetchall())>0
+    join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
+    players_with_id = select("DISTINCT *", join_expr, f'game_id={game_id} AND player_name="{name}"')
+    return len(players_with_id)>0
 
 def create_player(name, password_hash, game_id):
     player_id = generate_unique_field("players", "player_id")
