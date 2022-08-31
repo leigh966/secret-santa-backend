@@ -60,6 +60,17 @@ def get_all_players(game_id):
     all_names = select("players.player_name", from_expr, f"game_id={game_id}")
     return {"names": [all_names[i][0] for i in range(0, len(all_names))]}, 200
 
+def validate_registration(name, password, game_id):
+    if is_drawn(game_id):
+        return "The results have already been drawn!", 401
+    if name == "":
+        return "No name given", 400
+    if player_exists(name, game_id):
+        return "That username is already taken!", 409
+    if password == "":
+        return "No password given", 400
+    return "", 200
+
 @app.route('/register/<game_id>', methods=["POST"])
 @cross_origin()
 def register_player(game_id):
@@ -67,13 +78,12 @@ def register_player(game_id):
         return f"No game with id {game_id}", 404
     json_data = flask.request.json
     name=json_data["name"]
-    if name == "":
-        return "No name given", 400
-    if player_exists(name, game_id):
-        return "That username is already taken!", 409
     password=json_data["password"]
-    if password == "":
-        return "No password given", 400
+
+    validation_report = validate_registration(name, password, game_id)
+    if validation_report[1] != 200:  # stop and return the report if an error has occurred
+        return validation_report
+
     password_hash = hashlib.sha256(password.encode('utf-8'))
     return create_player(name, password_hash.hexdigest(), game_id)
 
