@@ -21,3 +21,6 @@ def generate_unique_field(table_name, field_name):
 def select(SELECT, FROM, WHERE):
     with sqlite3.connect("database.db") as connection:
         return connection.execute(f'SELECT {SELECT} FROM {FROM} WHERE {WHERE};').fetchall()
+
+def get_inner_join_expression(table1, table2, on):
+    return f"{table1} INNER JOIN {table2} ON {on}"

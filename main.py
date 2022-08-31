@@ -88,16 +88,9 @@ def randomise_order(arr):
     return output
 
 def draw(game_id):
-    command = 'SELECT player_name ' \
-              'FROM players ' \
-              'INNER JOIN games_and_players ' \
-              'ON players.player_id=games_and_players.player_id ' \
-              f'WHERE game_id={game_id};'
-    names = ()
-    print(command)
-    with sqlite3.connect("database.db") as connection:
-        names=randomise_order(connection.execute(command).fetchall())
-        print("names: ", names)
+    join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
+    names = select("player_name", join_expr, f"game_id={game_id}")
+    names = randomise_order(names)
     for index in range(0, len(names)):
         set_picked_name(game_id, names[index][0], names[(index+1)%len(names)][0])
 
@@ -136,14 +129,9 @@ def get_all_players(game_id):
     password=json_data["password"]
     if not authenticate_user(game_id, name, password):
         return "Name and/or password incorrect", 401
-    command = f"SELECT players.player_name " \
-              f"FROM players " \
-              f"INNER JOIN games_and_players " \
-              f"ON players.player_id=games_and_players.player_id " \
-              f'WHERE game_id={game_id};'
-    with sqlite3.connect("database.db") as connection:
-        allNames = connection.execute(command).fetchall()
-        return {"names": [allNames[i][0] for i in range(0, len(allNames))]}, 200
+    from_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
+    all_names = select("players.player_name", from_expr, f"game_id={game_id}")
+    return {"names": [all_names[i][0] for i in range(0, len(all_names))]}, 200
 
 @app.route('/register/<game_id>', methods=["POST"])
 @cross_origin()
