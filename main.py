@@ -47,6 +47,15 @@ def get_name(game_id):
     return picked_name, status
 
 
+@app.route('/groups/<game_id>')
+@cross_origin()
+def get_all_groups(game_id):
+    from_expr = get_inner_join_expression("groups", "games_and_groups",
+                                          "groups.group_id=games_and_groups.group_id")
+    all_groups = select("groups.group_name", from_expr, f"game_id={game_id}")
+    return {"names": [all_groups[i][0] for i in range(0, len(all_groups))]}, 200
+
+
 
 @app.route('/players/<game_id>', methods=["POST"])
 @cross_origin()
@@ -93,7 +102,12 @@ def register_player(game_id):
 def create_session():
     json_data = flask.request.json
     draw_date = json_data["draw"]
+    groups = json_data["groups"]
     game_id = generate_unique_field("games", "game_id")
+    for group in groups:
+        group_id = generate_unique_field("groups", "group_id")
+        create_record("groups", "group_id,group_name", f'{group_id},"{group}"')
+        create_record("games_and_groups", "game_id, group_id", f'{game_id}, {group_id}')
     create_record("games","game_id,draw_date",f'{game_id},"{draw_date}"')
     return str(game_id), 201
 
