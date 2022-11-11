@@ -52,8 +52,12 @@ def get_name(game_id):
 def get_all_groups(game_id):
     from_expr = get_inner_join_expression("groups", "games_and_groups",
                                           "groups.group_id=games_and_groups.group_id")
-    all_groups = select("groups.group_name", from_expr, f"game_id={game_id}")
-    return {"names": [all_groups[i][0] for i in range(0, len(all_groups))]}, 200
+    all_groups = select("groups.group_id,groups.group_name", from_expr, f"game_id={game_id}")
+    json_output = []
+    for group in all_groups:
+        new_json = {"id": group[0], "name": group[1]}
+        json_output.append(new_json)
+    return {"groups":json_output}, 200
 
 
 
