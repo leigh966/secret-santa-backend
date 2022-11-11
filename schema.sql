@@ -19,14 +19,14 @@ CREATE TABLE players (
     password_hash VARCHAR(100) NOT NULL,
     player_name VARCHAR(20) NOT NULL,
     picked_name VARCHAR(20) DEFAULT NULL,
-    group_id INTEGER,
+    group_id INTEGER NOT NULL,
     FOREIGN KEY(group_id) REFERENCES groups(group_id)
 );
 
 CREATE TABLE games_and_players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_id INTEGER,
-    player_id INTEGER,
+    game_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
     FOREIGN KEY(game_id) REFERENCES games(game_id),
     FOREIGN KEY(player_id) REFERENCES players(player_id)
 );
