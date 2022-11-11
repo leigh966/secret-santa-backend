@@ -2,6 +2,7 @@ DROP TABLE IF EXISTS games;
 DROP TABLE IF EXISTS players;
 DROP TABLE IF EXISTS games_and_players;
 DROP TABLE IF EXISTS groups;
+DROP TABLE IF EXISTS games_and_groups;
 
 CREATE TABLE groups (
     group_id INTEGER PRIMARY KEY,
@@ -12,6 +13,14 @@ CREATE TABLE games (
     game_id INTEGER PRIMARY KEY,
     draw_date DATE,
     drawn INTEGER DEFAULT FALSE
+);
+
+CREATE TABLE games_and_groups (
+    id INTEGER PRIMARY KEY,
+    game_id INTEGER NOT NULL,
+    group_id INTEGER NOT NULL,
+    FOREIGN KEY(game_id) REFERENCES games(game_id),
+    FOREIGN KEY(group_id) REFERENCES groups(group_id)
 );
 
 CREATE TABLE players (
