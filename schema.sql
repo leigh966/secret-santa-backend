@@ -19,7 +19,7 @@ CREATE TABLE players (
     password_hash VARCHAR(100) NOT NULL,
     player_name VARCHAR(20) NOT NULL,
     picked_name VARCHAR(20) DEFAULT NULL,
-    group_id INTEGER NOT NULL,
+    group_id INTEGER,
     FOREIGN KEY(group_id) REFERENCES groups(group_id)
 );
 
