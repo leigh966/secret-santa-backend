@@ -55,7 +55,7 @@ def get_all_groups(game_id):
     all_groups = select("groups.group_id,groups.group_name", from_expr, f"game_id={game_id}")
     json_output = []
     for group in all_groups:
-        new_json = {"id": group[0], "name": group[1]}
+        new_json = {"id": str(group[0]), "name": group[1]}  # fixing rounding error by converting to string
         json_output.append(new_json)
     return {"groups":json_output}, 200
 
