@@ -69,9 +69,15 @@ def get_all_players(game_id):
     password=json_data["password"]
     if not authenticate_user(game_id, name, password):
         return "Name and/or password incorrect", 401
-    from_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
-    all_names = select("players.player_name", from_expr, f"game_id={game_id}")
-    return {"names": [all_names[i][0] for i in range(0, len(all_names))]}, 200
+    from_expr1 = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
+    from_expr2 = " INNER JOIN groups ON players.group_id=groups.group_id"
+    print(select("*", "players", "1=1"))
+    all_players = select("players.player_name, groups.group_name", from_expr1+from_expr2, f"game_id={game_id}")
+    output = {"players" : []}
+    for name in all_players:
+        output["players"].append({"name":name[0], "group":name[1]})
+
+    return output, 200
 
 def validate_registration(name, password, game_id):
     if is_drawn(game_id):
@@ -92,13 +98,13 @@ def register_player(game_id):
     json_data = flask.request.json
     name=json_data["name"]
     password=json_data["password"]
-
+    group_id = json_data["group_id"]
     validation_report = validate_registration(name, password, game_id)
     if validation_report[1] != 200:  # stop and return the report if an error has occurred
         return validation_report
 
     password_hash = hashlib.sha256(password.encode('utf-8'))
-    return create_player(name, password_hash.hexdigest(), game_id)
+    return create_player(name, password_hash.hexdigest(), game_id, group_id)
 
 
 @app.route('/create-session/self-register', methods=["POST"])
@@ -121,6 +127,6 @@ def get_draw_date(game_id):
     return select("draw_date", "games", f"game_id={game_id}")[0][0]
 
 
-import init_db
+#import init_db
 
 app.run(port=8000)

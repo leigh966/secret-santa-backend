@@ -57,8 +57,10 @@ def player_exists(name, game_id):
     players_with_id = select("DISTINCT *", join_expr, f'game_id={game_id} AND player_name="{name}"')
     return len(players_with_id)>0
 
-def create_player(name, password_hash, game_id):
+def create_player(name, password_hash, game_id, group_id):
+    if(group_id != None and len(select("*", "games_and_groups", f"group_id={group_id} AND game_id={game_id}")) < 1):
+        return "group_id does not correspond to any group in this game", 401
     player_id = generate_unique_field("players", "player_id")
-    create_record("players", "player_id,player_name,password_hash", f'{player_id},"{name}","{password_hash}"')
+    create_record("players", "player_id,player_name,password_hash,group_id", f'{player_id},"{name}","{password_hash}",{group_id}')
     create_record("games_and_players", "game_id,player_id", f'{game_id},{player_id}')
     return "done",201
