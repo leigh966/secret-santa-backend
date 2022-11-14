@@ -69,15 +69,7 @@ def get_all_players(game_id):
     password=json_data["password"]
     if not authenticate_user(game_id, name, password):
         return "Name and/or password incorrect", 401
-    from_expr1 = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
-    from_expr2 = " INNER JOIN groups ON players.group_id=groups.group_id"
-    print(select("*", "players", "1=1"))
-    all_players = select("players.player_name, groups.group_name", from_expr1+from_expr2, f"game_id={game_id}")
-    output = {"players" : []}
-    for name in all_players:
-        output["players"].append({"name":name[0], "group":name[1]})
-
-    return output, 200
+    return get_players(game_id), 200
 
 def validate_registration(name, password, game_id):
     if is_drawn(game_id):

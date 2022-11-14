@@ -44,6 +44,9 @@ def authenticate_user(game_id,name, password):
     return len(matching_players) > 0
 
 
+def does_game_have_groups(game_id):
+    return len(select("*", "games_and_groups", f"game_id={game_id}")) > 0
+
 def get_picked_name(game_id, name):
     join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
     return select("picked_name", join_expr, f' player_name="{name}" AND game_id={game_id}')[0][0]
@@ -58,9 +61,29 @@ def player_exists(name, game_id):
     return len(players_with_id)>0
 
 def create_player(name, password_hash, game_id, group_id):
-    if(group_id != None and len(select("*", "games_and_groups", f"group_id={group_id} AND game_id={game_id}")) < 1):
-        return "group_id does not correspond to any group in this game", 401
+    if group_id:
+        if len(select("*", "games_and_groups", f"group_id={group_id} AND game_id={game_id}")) < 1:
+            return "group_id does not correspond to any group in this game", 401
+    else:
+        group_id = "NULL"
     player_id = generate_unique_field("players", "player_id")
     create_record("players", "player_id,player_name,password_hash,group_id", f'{player_id},"{name}","{password_hash}",{group_id}')
     create_record("games_and_players", "game_id,player_id", f'{game_id},{player_id}')
     return "done",201
+
+def get_players(game_id):
+    from_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
+    fields = "players.player_name"
+    game_has_groups = does_game_have_groups(game_id)
+    if game_has_groups:
+        fields += ", groups.group_name"
+        from_expr+=" INNER JOIN groups ON players.group_id=groups.group_id"
+    all_players = select(fields, from_expr, f"game_id={game_id}")
+    output = {"players" : []}
+    for name in all_players:
+        new_player = {"name":name[0]}
+        if game_has_groups:
+            new_player["group"] = name[1]
+        output["players"].append(new_player)
+
+    return output

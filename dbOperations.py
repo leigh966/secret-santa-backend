@@ -3,6 +3,7 @@ import random
 from db_config import DATABASE_FILENAME
 MAX_INT = (2**63)-1
 
+
 def create_record(table_name,field_name, field_value):
     command = f'INSERT INTO {table_name} ({field_name}) VALUES ({field_value})'
     print(command)
@@ -20,6 +21,7 @@ def generate_unique_field(table_name, field_name):
 
 def select(SELECT, FROM, WHERE):
     with sqlite3.connect(DATABASE_FILENAME) as connection:
+        print(f'SELECT {SELECT} FROM {FROM} WHERE {WHERE};')
         return connection.execute(f'SELECT {SELECT} FROM {FROM} WHERE {WHERE};').fetchall()
 
 def get_inner_join_expression(table1, table2, on):
