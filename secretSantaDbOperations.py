@@ -2,13 +2,83 @@ from dbOperations import *
 import hashlib
 from arrayOperations import randomise_order
 
-def draw(game_id):
+def get_groupless_series(game_id):
     join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
     names = select("player_name", join_expr, f"game_id={game_id}")
     names = randomise_order(names)
+    return [name[0] for name in names]
+
+def draw(game_id):
+    names = []
+    from_expr = get_inner_join_expression("groups", "games_and_groups",
+                                          "groups.group_id=games_and_groups.group_id")
+    all_groups = select("groups.group_id", from_expr, f"game_id={game_id}")
+    if len(all_groups) == 0:
+        names = get_groupless_series(game_id)
+    else:
+        names = get_group_series(game_id, all_groups)
     for index in range(0, len(names)):
-        set_picked_name(game_id, names[index][0], names[(index+1)%len(names)][0])
+        set_picked_name(game_id, names[index], names[(index+1)%len(names)])
     mark_drawn(game_id)
+
+def get_grouped_names(game_id, all_groups):
+    join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
+    groups = []
+    total_names = 0
+    for group in all_groups:
+        names = select("player_name", join_expr, f"game_id={game_id} AND group_id={group[0]}")
+        groups.append(randomise_order([name[0] for name in names]))
+        total_names += len(names)
+    return groups, total_names
+
+def get_group_series(game_id, all_groups):
+    groups, total_names = get_grouped_names(game_id, all_groups)
+    bubble_sort_by_size(groups)
+    output = []
+    ignore_index = -1
+    while(len(output) < total_names):
+        print(output)
+        print(groups)
+        selected_index = random.randint(0, get_index_high(groups))
+        print("generated index: ", selected_index)
+        if selected_index == ignore_index:
+            if selected_index == 0:
+                selected_index += 1
+            else:
+                selected_index -= 1
+        print("selecting: ", selected_index)
+        output.append(groups[selected_index].pop(0))
+        for ignore_index in range(selected_index,len(groups)-1):
+            if len(groups[ignore_index]) >= len(groups[ignore_index+1]):
+                break
+            move_elem_right(groups, ignore_index)
+    return output
+
+
+def get_index_high(arr):
+    highest = len(arr[0])
+    for i in range(1, len(arr)):
+        if len(arr[i]) < highest:
+            return i-1
+    return len(arr)-1
+
+def move_elem_right(array, index):
+    # swapping elements
+    temp = array[index]
+    array[index] = array[index + 1]
+    array[index + 1] = temp
+
+def move_into_order(array, index):
+    # loop to compare array elements
+    for j in range(0, len(array) - index - 1):
+        # compare two adjacent elements
+        if len(array[j]) < len(array[j + 1]):
+            move_elem_right(array, j)
+
+def bubble_sort_by_size(array):
+    # loop to access each array element
+    for i in range(len(array)):
+        move_into_order(array, i)
 
 def is_drawn(game_id):
     drawn = select("drawn", "games", f"game_id={game_id}")[0][0]

@@ -27,7 +27,7 @@ def start_game(game_id):
 
 @app.route('/picked/<game_id>', methods=["POST"])
 @cross_origin()
-def get_name(game_id):
+def get_picked(game_id):
     json_data = flask.request.json
     name=json_data["name"]
     password=json_data["password"]
@@ -103,8 +103,10 @@ def register_player(game_id):
 @cross_origin()
 def create_session():
     json_data = flask.request.json
+    print(json_data)
     draw_date = json_data["draw"]
     groups = json_data["groups"]
+    print(groups)
     game_id = generate_unique_field("games", "game_id")
     for group in groups:
         group_id = generate_unique_field("groups", "group_id")
@@ -119,6 +121,6 @@ def get_draw_date(game_id):
     return select("draw_date", "games", f"game_id={game_id}")[0][0]
 
 
-#import init_db
+import init_db
 
 app.run(port=8000)
