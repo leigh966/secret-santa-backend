@@ -119,8 +119,3 @@ def create_session():
 @cross_origin()
 def get_draw_date(game_id):
     return select("draw_date", "games", f"game_id={game_id}")[0][0]
-
-
-import init_db
-
-app.run(port=8000)
