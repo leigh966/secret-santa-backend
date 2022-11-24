@@ -1,5 +1,5 @@
 from dbOperations import getConnection
-from db_config import DATABASE_NAME, INIT_SCHEMA_FILENAME
+from db_config import INIT_SCHEMA_FILENAME
 
 connection = getConnection()
 cursor = connection.cursor()

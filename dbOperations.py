@@ -1,10 +1,10 @@
 import psycopg2
 import random
-from db_config import DATABASE_NAME, PASSWORD, USER, DATABASE_URL
+from db_config import DATABASE_NAME, PASSWORD, USER, HOST
 MAX_INT = (2**63)-1
 
 def getConnection():
-    return psycopg2.connect(dbname=DATABASE_NAME, user=USER, host=DATABASE_URL, password=PASSWORD)
+    return psycopg2.connect(dbname=DATABASE_NAME, user=USER, host=HOST, password=PASSWORD)
 
 def execute(command):
     con = getConnection()

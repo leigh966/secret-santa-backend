@@ -1,6 +1,8 @@
 import os
-DATABASE_NAME = "dao5hfqp8mnjck"
-DATABASE_URL = os.environ["DATABASE_URL"]
-USER = "fvocfwitonrgqe"
-PASSWORD = "b5931b7813d4b44fc2a613575b39a382183976385cb240b593a4c808b6495fa9"
+import urllib.parse as urlparse
+url = urlparse.urlparse(os.environ['DATABASE_URL'])
+DATABASE_NAME = url.path[1:]
+HOST = url.hostname
+USER = url.username
+PASSWORD = url.password
 INIT_SCHEMA_FILENAME = 'schema.sql'
