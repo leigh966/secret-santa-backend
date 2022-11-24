@@ -119,4 +119,6 @@ def create_session():
 @app.route('/game/<game_id>/draw_date')
 @cross_origin()
 def get_draw_date(game_id):
-    return str(select("draw_date", "games", f"game_id={game_id}")[0][0])
+    date = select("draw_date", "games", f"game_id={game_id}")
+    print(date)
+    return str(date[0][0])
