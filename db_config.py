@@ -1,2 +1,6 @@
-DATABASE_FILENAME = 'database.db'
+import os
+DATABASE_NAME = "dao5hfqp8mnjck"
+DATABASE_URL = os.environ["DATABASE_URL"]
+USER = "fvocfwitonrgqe"
+PASSWORD = "b5931b7813d4b44fc2a613575b39a382183976385cb240b593a4c808b6495fa9"
 INIT_SCHEMA_FILENAME = 'schema.sql'
