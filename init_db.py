@@ -1,12 +1,14 @@
-import sqlite3
-from db_config import DATABASE_FILENAME, INIT_SCHEMA_FILENAME
+from dbOperations import getConnection
+from db_config import DATABASE_NAME, INIT_SCHEMA_FILENAME
 
-connection = sqlite3.connect(DATABASE_FILENAME)
-
+connection = getConnection()
+cursor = connection.cursor()
+cursor.exec
 
 with open(INIT_SCHEMA_FILENAME) as f:
-    connection.executescript(f.read())
+    cursor.execute(f.read())
 
 
 connection.commit()
+cursor.close()
 connection.close()
