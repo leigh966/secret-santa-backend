@@ -9,12 +9,14 @@ def getConnection():
 def execute(command):
     con = getConnection()
     cur = con.cursor()
-    ret = cur.execute(command)
+    cur.execute(command)
     con.commit()
     cur.close()
     con.close()
-    return ret
 
+
+def execute(command, cursor):
+    cursor.execute(command)
 
 def create_record(table_name,field_name, field_value):
     command = f'INSERT INTO {table_name} ({field_name}) VALUES ({field_value})'
@@ -24,8 +26,8 @@ def generate_unique_field(table_name, field_name):
     potential_id = -1
     con = getConnection()
     cur = con.cursor()
-    while potential_id < 0 or len(cur.execute("SELECT * FROM "+table_name+" WHERE "+field_name+"='"
-                                                         + str(potential_id) + "';").fetchall()) > 0:
+
+    while potential_id < 0 or len(select("*", table_name, f"{field_name}={str(potential_id)}")) > 0:
             potential_id = random.randint(0, MAX_INT)
     con.commit()
     cur.close()
@@ -33,7 +35,13 @@ def generate_unique_field(table_name, field_name):
     return potential_id
 
 def select(SELECT, FROM, WHERE):
-    return execute(f'SELECT {SELECT} FROM {FROM} WHERE {WHERE};')
+    con = getConnection()
+    cur = con.cursor()
+    execute(f'SELECT {SELECT} FROM {FROM} WHERE {WHERE};', cur)
+    ret = cur.fetchall()
+    cur.close()
+    con.close()
+    return ret
 
 def get_inner_join_expression(table1, table2, on):
     return f"{table1} INNER JOIN {table2} ON {on}"
