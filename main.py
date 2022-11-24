@@ -120,5 +120,4 @@ def create_session():
 @cross_origin()
 def get_draw_date(game_id):
     date = select("draw_date", "games", f"game_id={game_id}")
-    print(date)
     return str(date[0][0])
