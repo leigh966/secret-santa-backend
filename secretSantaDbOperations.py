@@ -127,7 +127,7 @@ def game_exists(game_id):
 
 def player_exists(name, game_id):
     join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
-    players_with_id = select("DISTINCT *", join_expr, f'game_id={game_id} AND player_name="{name}"')
+    players_with_id = select("DISTINCT *", join_expr, f'game_id={game_id} AND player_name=\'{name}\'')
     return len(players_with_id)>0
 
 def create_player(name, password_hash, game_id, group_id):
