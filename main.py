@@ -111,9 +111,9 @@ def create_session():
     game_id = generate_unique_field("games", "game_id")
     for group in groups:
         group_id = generate_unique_field("groups", "group_id")
-        create_record("groups", "group_id,group_name", f'{group_id},"{group}"')
+        create_record("groups", "group_id,group_name", f'{group_id},\'{group}\'')
         create_record("games_and_groups", "game_id, group_id", f'{game_id}, {group_id}')
-    create_record("games","game_id,draw_date",f'{game_id},"{draw_date}"')
+    create_record("games","game_id,draw_date",f'{game_id},\'{draw_date}\'')
     return str(game_id), 201
 
 @app.route('/game/<game_id>/draw_date')
