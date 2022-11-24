@@ -33,7 +33,7 @@ CREATE TABLE players (
 );
 
 CREATE TABLE games_and_players (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL INTEGER PRIMARY KEY,
     game_id INTEGER NOT NULL,
     player_id INTEGER NOT NULL,
     FOREIGN KEY(game_id) REFERENCES games(game_id),
