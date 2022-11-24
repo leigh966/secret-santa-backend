@@ -137,7 +137,7 @@ def create_player(name, password_hash, game_id, group_id):
     else:
         group_id = "NULL"
     player_id = generate_unique_field("players", "player_id")
-    create_record("players", "player_id,player_name,password_hash,group_id", f'{player_id},"{name}","{password_hash}",{group_id}')
+    create_record("players", "player_id,player_name,password_hash,group_id", f'{player_id},\'{name}\',\'{password_hash}\',{group_id}')
     create_record("games_and_players", "game_id,player_id", f'{game_id},{player_id}')
     return "done",201
 
