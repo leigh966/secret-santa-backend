@@ -1,8 +1,8 @@
+DROP TABLE IF EXISTS games_and_players;
+DROP TABLE IF EXISTS games_and_groups;
 DROP TABLE IF EXISTS games;
 DROP TABLE IF EXISTS players;
-DROP TABLE IF EXISTS games_and_players;
 DROP TABLE IF EXISTS groups;
-DROP TABLE IF EXISTS games_and_groups;
 
 CREATE TABLE groups (
     group_id INTEGER PRIMARY KEY,
