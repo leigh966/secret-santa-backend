@@ -15,7 +15,7 @@ def execute(command):
     con.close()
 
 
-def execute(command, cursor):
+def execute_with_cursor(command, cursor):
     cursor.execute(command)
 
 def create_record(table_name,field_name, field_value):
@@ -37,7 +37,7 @@ def generate_unique_field(table_name, field_name):
 def select(SELECT, FROM, WHERE):
     con = getConnection()
     cur = con.cursor()
-    execute(f'SELECT {SELECT} FROM {FROM} WHERE {WHERE};', cur)
+    execute_with_cursor(f'SELECT {SELECT} FROM {FROM} WHERE {WHERE};', cur)
     ret = cur.fetchall()
     cur.close()
     con.close()
