@@ -12,7 +12,7 @@ CREATE TABLE groups (
 CREATE TABLE games (
     game_id INTEGER PRIMARY KEY,
     draw_date DATE,
-    drawn INTEGER DEFAULT FALSE
+    drawn BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE games_and_groups (
