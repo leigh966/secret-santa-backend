@@ -88,7 +88,7 @@ def mark_drawn(game_id):
     execute(f"UPDATE games SET drawn = TRUE WHERE game_id={game_id};")
 
 def should_game_start(game_id):
-    passed_game = select("*", "games", f'game_id={game_id} AND draw_date > datetime("now")')
+    passed_game = select("*", "games", f'game_id={game_id} AND draw_date > NOW()')
     if len(passed_game) == 0:
         return True
     return False
