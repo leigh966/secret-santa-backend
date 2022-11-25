@@ -85,8 +85,7 @@ def is_drawn(game_id):
     return drawn == 1
 
 def mark_drawn(game_id):
-    with sqlite3.connect("database.db") as connection:
-        connection.execute(f"UPDATE games SET drawn = TRUE WHERE game_id={game_id};")
+    execute(f"UPDATE games SET drawn = TRUE WHERE game_id={game_id};")
 
 def should_game_start(game_id):
     passed_game = select("*", "games", f'game_id={game_id} AND draw_date > datetime("now")')
@@ -100,16 +99,13 @@ def set_picked_name(game_id, name, picked_name):
               f'WHERE player_id ' \
               f'IN  (SELECT player_id FROM games_and_players WHERE game_id={game_id}) ' \
               f'AND player_name = "{name}";'
-    print(command)
-    with sqlite3.connect("database.db") as connection:
-        connection.execute(command)
-        connection.commit()
+    execute(command)
 
 
 def authenticate_user(game_id,name, password):
     password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
     join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
-    and_expr = get_and_expression(f'game_id="{game_id}"', f'players.player_name="{name}"', f'players.password_hash="{password_hash}"')
+    and_expr = get_and_expression(f'game_id="{game_id}"', f'players.player_name=\'{name}\'', f'players.password_hash=\'{password_hash}\'')
     matching_players = select("DISTINCT players.player_id", join_expr, and_expr)
     return len(matching_players) > 0
 
