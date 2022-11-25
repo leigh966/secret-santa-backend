@@ -98,7 +98,7 @@ def set_picked_name(game_id, name, picked_name):
               f"SET picked_name = '{picked_name}' " \
               f'WHERE player_id ' \
               f'IN  (SELECT player_id FROM games_and_players WHERE game_id={game_id}) ' \
-              f'AND player_name = "{name}";'
+              f'AND player_name = \'{name}\';'
     execute(command)
 
 
