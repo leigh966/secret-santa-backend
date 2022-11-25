@@ -105,7 +105,7 @@ def set_picked_name(game_id, name, picked_name):
 def authenticate_user(game_id,name, password):
     password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
     join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
-    and_expr = get_and_expression(f'game_id="{game_id}"', f'players.player_name=\'{name}\'', f'players.password_hash=\'{password_hash}\'')
+    and_expr = get_and_expression(f'game_id=\'{game_id}\'', f'players.player_name=\'{name}\'', f'players.password_hash=\'{password_hash}\'')
     matching_players = select("DISTINCT players.player_id", join_expr, and_expr)
     return len(matching_players) > 0
 
@@ -115,7 +115,7 @@ def does_game_have_groups(game_id):
 
 def get_picked_name(game_id, name):
     join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
-    return select("picked_name", join_expr, f' player_name="{name}" AND game_id={game_id}')[0][0]
+    return select("picked_name", join_expr, f' player_name=\'{name}\' AND game_id={game_id}')[0][0]
 
 def game_exists(game_id):
     games_with_id = select("game_id", "games", f"game_id={game_id}")
