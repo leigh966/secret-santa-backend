@@ -1,6 +1,4 @@
 # Going for a lightweight (no user data saved) approach instead
-import sqlite3
-
 import flask
 from flask import Flask
 from flask_cors import cross_origin, CORS
@@ -16,14 +14,10 @@ import init_db
 def start_game(game_id):
     LONG_AGO = "01-01-1980 00:00:00"
     command = "UPDATE games " \
-              f'SET draw_date = "{LONG_AGO}" ' \
-              f'WHERE game_id = "{game_id}";'
-    print(command)
-
-    with sqlite3.connect("database.db") as connection:
-        connection.execute(command)
-        connection.commit()
-        return "", 201
+              f'SET draw_date = \'{LONG_AGO}\' ' \
+              f'WHERE game_id = \'{game_id}\';'
+    execute(command)
+    return "", 201
 
 
 @app.route('/picked/<game_id>', methods=["POST"])
