@@ -6,7 +6,6 @@ from secretSantaDbOperations import *
 
 app = Flask(__name__)
 cors = CORS(app)
-import init_db
 
 # DEBUG - ensure to remove in production
 @app.route('/start/<game_id>', methods=["POST"])
