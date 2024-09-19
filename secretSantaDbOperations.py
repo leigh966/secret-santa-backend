@@ -1,10 +1,13 @@
 import hashlib
 from arrayOperations import randomise_order
-from Models import Group
+from Models.Group import Group
 import uuid
+from Models.Game import Game
+from Models.Player import Player
+from sqlalchemy import and_
 
 def create_group(name, game_id, session):
-    grp = Group.Group()
+    grp = Group()
     grp.group_id = uuid.uuid4()
     grp.name = name
     grp.game_id = game_id
@@ -88,9 +91,9 @@ def bubble_sort_by_size(array):
     for i in range(len(array)):
         move_into_order(array, i)
 
-def is_drawn(game_id):
-    drawn = select("drawn", "games", f"game_id={game_id}")[0][0]
-    return drawn == 1
+def is_drawn(game_id, db):
+    game = db.get_or_404(Game, game_id)
+    return game.drawn
 
 def mark_drawn(game_id):
     execute(f"UPDATE games SET drawn = TRUE WHERE game_id={game_id};")
@@ -129,20 +132,21 @@ def game_exists(game_id):
     games_with_id = select("game_id", "games", f"game_id={game_id}")
     return len(games_with_id) > 0
 
-def player_exists(name, game_id):
-    join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
-    players_with_id = select("DISTINCT *", join_expr, f'game_id={game_id} AND player_name=\'{name}\'')
-    return len(players_with_id)>0
-
-def create_player(name, password_hash, game_id, group_id):
+def player_exists(name, game_id, session):
+   
+   return session.query(Player).filter(and_(Player.game_id==game_id,Player.player_name==name)).count()>0
+def create_player(name, password_hash, game_id, group_id, session):
     if group_id:
-        if len(select("*", "games_and_groups", f"group_id={group_id} AND game_id={game_id}")) < 1:
+        num_matching_groups = session.query(Group).filter_by(and_(Group.group_id==group_id,Group.game_id==game_id)).count()
+        if num_matching_groups < 1:
             return "group_id does not correspond to any group in this game", 401
-    else:
-        group_id = "NULL"
-    player_id = generate_unique_field("players", "player_id")
-    create_record("players", "player_id,player_name,password_hash,group_id", f'{player_id},\'{name}\',\'{password_hash}\',{group_id}')
-    create_record("games_and_players", "game_id,player_id", f'{game_id},{player_id}')
+    new_player = Player()
+    new_player.player_id = str(uuid.uuid4())
+    new_player.password_hash=password_hash
+    new_player.player_name=name
+    new_player.game_id=game_id
+    session.add(new_player)
+    session.commit()
     return "done",201
 
 def get_players(game_id):

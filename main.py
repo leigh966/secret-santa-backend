@@ -73,32 +73,31 @@ def get_all_players(game_id):
         return "Name and/or password incorrect", 401
     return get_players(game_id), 200
 
-def validate_registration(name, password, game_id):
-    if is_drawn(game_id):
+def validate_registration(name, password, game_id, db):
+    if is_drawn(game_id, db):
         return "The results have already been drawn!", 401
     if name == "":
         return "No name given", 400
-    if player_exists(name, game_id):
+    if player_exists(name, game_id, db.session):
         return "That username is already taken!", 409
-    if password == "":
+    if password == "": # should probably make some password rules? nothing crazy just sanity stuff
         return "No password given", 400
     return "", 200
 
 @app.route('/register/<game_id>', methods=["POST"])
 @cross_origin()
 def register_player(game_id):
-    if not game_exists(game_id):
-        return f"No game with id {game_id}", 404
+    db.get_or_404(Game, game_id, description="Game does not exist")
     json_data = flask.request.json
     name=json_data["name"]
     password=json_data["password"]
     group_id = json_data["group_id"]
-    validation_report = validate_registration(name, password, game_id)
+    validation_report = validate_registration(name, password, game_id, db)
     if validation_report[1] != 200:  # stop and return the report if an error has occurred
         return validation_report
 
     password_hash = hashlib.sha256(password.encode('utf-8'))
-    return create_player(name, password_hash.hexdigest(), game_id, group_id)
+    return create_player(name, password_hash.hexdigest(), game_id, group_id, db.session)
 
 
 @app.route('/create-session/self-register', methods=["POST"])
