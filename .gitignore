@@ -1,5 +1,5 @@
 credentials.json
-database.db
+*.db
 .idea/
 __pycache__/
 .env

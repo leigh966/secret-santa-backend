@@ -5,7 +5,7 @@ from flask_cors import cross_origin, CORS
 from secretSantaDbOperations import *
 from db import db
 from db_config import *
-from Models import Game, Group, Player
+from Models.Game import Game
 import uuid
 from datetime import datetime
 
@@ -108,7 +108,7 @@ def create_session():
     print(json_data)
     groups = json_data["groups"]
     print(groups)
-    game = Game.Game()
+    game = Game()
     game_id = str(uuid.uuid4())
     game.game_id = game_id
     game.draw_date = datetime.strptime(json_data["draw"], '%Y-%m-%d %H:%M:%S')
@@ -121,8 +121,8 @@ def create_session():
 @app.route('/game/<game_id>/draw_date')
 @cross_origin()
 def get_draw_date(game_id):
-    date = select("draw_date", "games", f"game_id={game_id}")
-    return str(date[0][0])
+    game = db.get_or_404(Game,game_id)
+    return str(game.draw_date)
 
 
 with app.app_context():
