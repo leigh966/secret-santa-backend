@@ -1,6 +1,14 @@
-from dbOperations import *
 import hashlib
 from arrayOperations import randomise_order
+from Models import Group
+import uuid
+
+def create_group(name, game_id, session):
+    grp = Group.Group()
+    grp.group_id = uuid.uuid4()
+    grp.name = name
+    grp.game_id = game_id
+    session.add(grp)
 
 def get_groupless_series(game_id):
     join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")

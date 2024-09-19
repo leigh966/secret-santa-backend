@@ -2,3 +2,4 @@ credentials.json
 database.db
 .idea/
 __pycache__/
+.env

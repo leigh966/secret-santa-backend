@@ -3,9 +3,17 @@ import flask
 from flask import Flask
 from flask_cors import cross_origin, CORS
 from secretSantaDbOperations import *
+from db import db
+from db_config import *
+from Models import Game, Group, Player
+import uuid
+from datetime import datetime
+
 
 app = Flask(__name__)
 cors = CORS(app)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+db.init_app(app)
 
 # DEBUG - ensure to remove in production
 @app.route('/start/<game_id>', methods=["POST"])
@@ -98,15 +106,16 @@ def register_player(game_id):
 def create_session():
     json_data = flask.request.json
     print(json_data)
-    draw_date = json_data["draw"]
     groups = json_data["groups"]
     print(groups)
-    game_id = generate_unique_field("games", "game_id")
-    create_record("games","game_id,draw_date",f'{game_id},\'{draw_date}\'')
+    game = Game.Game()
+    game_id = str(uuid.uuid4())
+    game.game_id = game_id
+    game.draw_date = datetime.strptime(json_data["draw"], '%Y-%m-%d %H:%M:%S')
+    db.session.add(game)
     for group in groups:
-        group_id = generate_unique_field("groups", "group_id")
-        create_record("groups", "group_id,group_name", f'{group_id},\'{group}\'')
-        create_record("games_and_groups", "game_id, group_id", f'{game_id}, {group_id}')
+        create_group(group, game_id, db.session)
+    db.session.commit()
     return str(game_id), 201
 
 @app.route('/game/<game_id>/draw_date')
@@ -114,3 +123,7 @@ def create_session():
 def get_draw_date(game_id):
     date = select("draw_date", "games", f"game_id={game_id}")
     return str(date[0][0])
+
+
+with app.app_context():
+    db.create_all()
