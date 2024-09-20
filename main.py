@@ -52,12 +52,10 @@ def get_picked(game_id):
 @app.route('/groups/<game_id>')
 @cross_origin()
 def get_all_groups(game_id):
-    from_expr = get_inner_join_expression("groups", "games_and_groups",
-                                          "groups.group_id=games_and_groups.group_id")
-    all_groups = select("groups.group_id,groups.group_name", from_expr, f"game_id={game_id}")
+    all_groups = db.session.query(Group).filter(Group.game_id==game_id).all()
     json_output = []
     for group in all_groups:
-        new_json = {"id": str(group[0]), "name": group[1]}  # fixing rounding error by converting to string
+        new_json = {"id": str(group.group_id), "name": group.group_name}  # fixing rounding error by converting to string
         json_output.append(new_json)
     return {"groups":json_output}, 200
 
@@ -69,9 +67,9 @@ def get_all_players(game_id):
     json_data = flask.request.json
     name=json_data["name"]
     password=json_data["password"]
-    if not authenticate_user(game_id, name, password):
+    if not authenticate_user(game_id, name, password, db.session):
         return "Name and/or password incorrect", 401
-    return get_players(game_id), 200
+    return get_players(game_id, db.session), 200
 
 def validate_registration(name, password, game_id, db):
     if is_drawn(game_id, db):

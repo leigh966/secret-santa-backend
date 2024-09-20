@@ -8,8 +8,8 @@ from sqlalchemy import and_
 
 def create_group(name, game_id, session):
     grp = Group()
-    grp.group_id = uuid.uuid4()
-    grp.name = name
+    grp.group_id = str(uuid.uuid4())
+    grp.group_name = name
     grp.game_id = game_id
     session.add(grp)
 
@@ -113,12 +113,10 @@ def set_picked_name(game_id, name, picked_name):
     execute(command)
 
 
-def authenticate_user(game_id,name, password):
+def authenticate_user(game_id,name, password,session):
     password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
-    join_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
-    and_expr = get_and_expression(f'game_id=\'{game_id}\'', f'players.player_name=\'{name}\'', f'players.password_hash=\'{password_hash}\'')
-    matching_players = select("DISTINCT players.player_id", join_expr, and_expr)
-    return len(matching_players) > 0
+    matching_players = session.query(Player).filter(and_(Player.game_id==game_id,Player.player_name==name,Player.password_hash==password_hash))
+    return matching_players.count() > 0
 
 
 def does_game_have_groups(game_id):
@@ -137,7 +135,7 @@ def player_exists(name, game_id, session):
    return session.query(Player).filter(and_(Player.game_id==game_id,Player.player_name==name)).count()>0
 def create_player(name, password_hash, game_id, group_id, session):
     if group_id:
-        num_matching_groups = session.query(Group).filter_by(and_(Group.group_id==group_id,Group.game_id==game_id)).count()
+        num_matching_groups = session.query(Group).filter(and_(Group.group_id==group_id,Group.game_id==game_id)).count()
         if num_matching_groups < 1:
             return "group_id does not correspond to any group in this game", 401
     new_player = Player()
@@ -145,23 +143,21 @@ def create_player(name, password_hash, game_id, group_id, session):
     new_player.password_hash=password_hash
     new_player.player_name=name
     new_player.game_id=game_id
+    new_player.group_id=group_id
     session.add(new_player)
     session.commit()
     return "done",201
 
-def get_players(game_id):
-    from_expr = get_inner_join_expression("players", "games_and_players", "players.player_id=games_and_players.player_id")
-    fields = "players.player_name"
-    game_has_groups = does_game_have_groups(game_id)
-    if game_has_groups:
-        fields += ", groups.group_name"
-        from_expr+=" INNER JOIN groups ON players.group_id=groups.group_id"
-    all_players = select(fields, from_expr, f"game_id={game_id}")
-    output = {"players" : []}
-    for name in all_players:
-        new_player = {"name":name[0]}
-        if game_has_groups:
-            new_player["group"] = name[1]
-        output["players"].append(new_player)
+def get_players(game_id, session):
+    players = session.query(Player).filter(Player.game_id==game_id)
+    
+    output = []
+    for player in players:
+        group = session.query(Group).get(player.group_id)
+        group_name = None
+        if group:
+            group_name = group.group_name
+        output.append({"name":player.player_name, "group":group_name})
+
 
     return output
