@@ -33,17 +33,17 @@ def get_picked(game_id):
     json_data = flask.request.json
     name=json_data["name"]
     password=json_data["password"]
-    if not authenticate_user(game_id, name, password):
+    if not authenticate_user(game_id, name, password, db.session):
         return "Name and/or password incorrect", 401
-    if not should_game_start(game_id):
+    if not should_game_start(game_id, db):
         return "Not ready to draw", 401
-    picked_name = get_picked_name(game_id,name)
+    picked_name = get_picked_name(game_id,name,db.session)
     status = 200
     if picked_name == None:
-        if is_drawn(game_id):
+        if is_drawn(game_id, db):
             return "A name should have been drawn but hasn't. Sorry, we don't know what went wrong", 500
-        draw(game_id)
-        picked_name = get_picked_name(game_id, name)
+        draw(game_id, db.session)
+        picked_name = get_picked_name(game_id, name, db.session)
         status = 201
     print(picked_name)
     return picked_name, status
